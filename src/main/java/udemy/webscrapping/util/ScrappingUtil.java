@@ -28,6 +28,9 @@ public class ScrappingUtil {
             LOGGER.info("Partida: " + title);
             StatusPartida statusPartida = obterStatusDaPartida(document);
             LOGGER.info("status da partida: " + statusPartida);
+            String placarDaCasa = obterResultadoDaPartida(document);
+            LOGGER.info("Placar da casa: " + placarDaCasa );
+            obterTempoPartida(document);
         } catch (IOException e) {
             LOGGER.error("Erro ao tentar conectar no google com JSOUP -> " + e.getMessage());
         }
@@ -50,5 +53,25 @@ public class ScrappingUtil {
             statusPartida = StatusPartida.PARTIDA_ENCERRADA;
         }
         return statusPartida;
+    }
+    
+    public String obterTempoPartida(Document document){
+        String tempoPartida = null;
+        boolean isNotTempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").isEmpty();
+        if(!isNotTempoPartida){
+            tempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").first().text();
+        }
+        isNotTempoPartida = document.select("span[class=imso_mh__ft-mtch imso-medium-font imso_mh__ft-mtchc]").isEmpty();
+        if(!isNotTempoPartida){
+            tempoPartida = document.select("span[class=imso_mh__ft-mtch imso-medium-font imso_mh__ft-mtchc]").first().text();
+        }
+        LOGGER.info(tempoPartida);
+        return tempoPartida;
+    }
+
+    public String obterResultadoDaPartida(Document document){
+        String placarVisitante = document.select("div[class=imso_mh__r-tm-sc imso_mh__scr-it imso-light-font]").first().text();
+        String placarDaCasa = document.select("div[class=imso_mh__l-tm-sc imso_mh__scr-it imso-light-font]").first().text();
+        return "Placar: " + placarDaCasa + " x " + placarVisitante;
     }
 }
