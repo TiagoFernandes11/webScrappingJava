@@ -16,7 +16,7 @@ public class ScrappingUtil {
     private static final String COMPLEMENTO_URL_GOOGLE = "&hl=pt-BR";
 
     public static void main(String[] args) {
-        String url = BASE_SEARCH_URL_GOOGLE + "corinthians+x+fotaleza" + COMPLEMENTO_URL_GOOGLE;
+        String url = BASE_SEARCH_URL_GOOGLE + "saopaulo+x+palmeiras" + COMPLEMENTO_URL_GOOGLE;
         ScrappingUtil scrappingUtil = new ScrappingUtil();
         scrappingUtil.obterInformacoesPartida(url);
     }
@@ -34,6 +34,9 @@ public class ScrappingUtil {
             }
             LOGGER.info("Nome da equipe da casa: " + obterNomeDaEquipeDaCasa(document));
             LOGGER.info("Nome da equipe visitante: " + obterNomeDaEquipeVisitante(document));
+            LOGGER.info("URL do logo do time da casa: " + obterLogoEquipeDaCasa(document));
+            LOGGER.info("URL do logo do time vistante: " + obterLogoEquipeVisitante(document));
+
         } catch (IOException e) {
             LOGGER.error("Erro ao tentar conectar no google com JSOUP -> " + e.getMessage());
         }
@@ -70,10 +73,18 @@ public class ScrappingUtil {
         return tempoPartida;
     }
 
-    public String obterResultadoDaPartida(Document document) {
-        String placarVisitante = document.select("div[class=imso_mh__r-tm-sc imso_mh__scr-it imso-light-font]").first().text();
-        String placarDaCasa = document.select("div[class=imso_mh__l-tm-sc imso_mh__scr-it imso-light-font]").first().text();
+    private String obterResultadoDaPartida(Document document) {
+        Integer placarVisitante = obterPlacarEquipeVisitante(document);
+        Integer placarDaCasa = obterPlacarEquipeCasa(document);
         return "Placar: " + placarDaCasa + " x " + placarVisitante;
+    }
+
+    private Integer obterPlacarEquipeCasa(Document document){
+        return Integer.parseInt(document.select("div[class=imso_mh__l-tm-sc imso_mh__scr-it imso-light-font]").first().text());
+    }
+
+    private Integer obterPlacarEquipeVisitante(Document document){
+        return Integer.parseInt(document.select("div[class=imso_mh__r-tm-sc imso_mh__scr-it imso-light-font]").first().text());
     }
 
     private String obterNomeDaEquipeDaCasa(Document document) {
@@ -81,9 +92,19 @@ public class ScrappingUtil {
         return element.select("span").text();
     }
 
-    private String obterNomeDaEquipeVisitante(Document document){
+    private String obterNomeDaEquipeVisitante(Document document) {
         Element element = document.select("div[class=imso_mh__second-tn-ed imso_mh__tnal-cont imso-tnol]").first();
         return element.select("span").text();
+    }
+
+    private String obterLogoEquipeDaCasa(Document document) {
+        Element element = document.select("div[class=imso_mh__first-tn-ed imso_mh__tnal-cont imso-tnol]").first();
+        return element.select("img[class=imso_btl__mh-logo]").attr("src");
+    }
+
+    private String obterLogoEquipeVisitante(Document document) {
+        Element element = document.select("div[class=imso_mh__second-tn-ed imso_mh__tnal-cont imso-tnol]").first();
+        return element.select("img[class=imso_btl__mh-logo]").attr("src");
     }
 
 }
