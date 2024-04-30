@@ -2,6 +2,7 @@ package udemy.webscrapping.util;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import udemy.webscrapping.dto.PartidaGoogleDTO;
@@ -15,7 +16,7 @@ public class ScrappingUtil {
     private static final String COMPLEMENTO_URL_GOOGLE = "&hl=pt-BR";
 
     public static void main(String[] args) {
-        String url = BASE_SEARCH_URL_GOOGLE + "corinthians+x+fluminense" + COMPLEMENTO_URL_GOOGLE;
+        String url = BASE_SEARCH_URL_GOOGLE + "corinthians+x+fotaleza" + COMPLEMENTO_URL_GOOGLE;
         ScrappingUtil scrappingUtil = new ScrappingUtil();
         scrappingUtil.obterInformacoesPartida(url);
     }
@@ -24,13 +25,15 @@ public class ScrappingUtil {
         PartidaGoogleDTO partida = new PartidaGoogleDTO();
         try {
             Document document = Jsoup.connect(url).get();
-            String title = document.title();
-            LOGGER.info("Partida: " + title);
-            StatusPartida statusPartida = obterStatusDaPartida(document);
-            LOGGER.info("status da partida: " + statusPartida);
-            String placarDaCasa = obterResultadoDaPartida(document);
-            LOGGER.info("Placar da casa: " + placarDaCasa );
-            obterTempoPartida(document);
+            StatusPartida statusDaPartida = obterStatusDaPartida(document);
+            LOGGER.info("Partida: " + document.title());
+            LOGGER.info("status da partida: " + statusDaPartida);
+            if (statusDaPartida != StatusPartida.PARTIDA_NAO_INICIADA) {
+                LOGGER.info("Placar da casa: " + obterResultadoDaPartida(document));
+                LOGGER.info("Tempo da partida: " + obterTempoPartida(document));
+            }
+            LOGGER.info("Nome da equipe da casa: " + obterNomeDaEquipeDaCasa(document));
+            LOGGER.info("Nome da equipe visitante: " + obterNomeDaEquipeVisitante(document));
         } catch (IOException e) {
             LOGGER.error("Erro ao tentar conectar no google com JSOUP -> " + e.getMessage());
         }
@@ -42,7 +45,6 @@ public class ScrappingUtil {
         boolean isNotTempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").isEmpty();
         if (!isNotTempoPartida) {
             String tempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").first().text();
-            LOGGER.info("tempoPartida.text(): " + tempoPartida);
             statusPartida = StatusPartida.PARTIDA_EM_ANDAMENTO;
             if (tempoPartida.contains("Pênaltis")) {
                 statusPartida = StatusPartida.PARTIDA_PENALTIS;
@@ -54,24 +56,34 @@ public class ScrappingUtil {
         }
         return statusPartida;
     }
-    
-    public String obterTempoPartida(Document document){
+
+    public String obterTempoPartida(Document document) {
         String tempoPartida = null;
         boolean isNotTempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").isEmpty();
-        if(!isNotTempoPartida){
+        if (!isNotTempoPartida) {
             tempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").first().text();
         }
         isNotTempoPartida = document.select("span[class=imso_mh__ft-mtch imso-medium-font imso_mh__ft-mtchc]").isEmpty();
-        if(!isNotTempoPartida){
+        if (!isNotTempoPartida) {
             tempoPartida = document.select("span[class=imso_mh__ft-mtch imso-medium-font imso_mh__ft-mtchc]").first().text();
         }
-        LOGGER.info(tempoPartida);
         return tempoPartida;
     }
 
-    public String obterResultadoDaPartida(Document document){
+    public String obterResultadoDaPartida(Document document) {
         String placarVisitante = document.select("div[class=imso_mh__r-tm-sc imso_mh__scr-it imso-light-font]").first().text();
         String placarDaCasa = document.select("div[class=imso_mh__l-tm-sc imso_mh__scr-it imso-light-font]").first().text();
         return "Placar: " + placarDaCasa + " x " + placarVisitante;
     }
+
+    private String obterNomeDaEquipeDaCasa(Document document) {
+        Element element = document.select("div[class=imso_mh__first-tn-ed imso_mh__tnal-cont imso-tnol]").first();
+        return element.select("span").text();
+    }
+
+    private String obterNomeDaEquipeVisitante(Document document){
+        Element element = document.select("div[class=imso_mh__second-tn-ed imso_mh__tnal-cont imso-tnol]").first();
+        return element.select("span").text();
+    }
+
 }
