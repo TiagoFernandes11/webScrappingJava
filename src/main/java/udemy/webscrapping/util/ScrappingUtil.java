@@ -3,11 +3,14 @@ package udemy.webscrapping.util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import udemy.webscrapping.dto.PartidaGoogleDTO;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ScrappingUtil {
 
@@ -16,7 +19,7 @@ public class ScrappingUtil {
     private static final String COMPLEMENTO_URL_GOOGLE = "&hl=pt-BR";
 
     public static void main(String[] args) {
-        String url = BASE_SEARCH_URL_GOOGLE + "saopaulo+x+palmeiras" + COMPLEMENTO_URL_GOOGLE;
+        String url = BASE_SEARCH_URL_GOOGLE + "fortaleza+x+brangantino" + COMPLEMENTO_URL_GOOGLE;
         ScrappingUtil scrappingUtil = new ScrappingUtil();
         scrappingUtil.obterInformacoesPartida(url);
     }
@@ -31,6 +34,8 @@ public class ScrappingUtil {
             if (statusDaPartida != StatusPartida.PARTIDA_NAO_INICIADA) {
                 LOGGER.info("Placar da casa: " + obterResultadoDaPartida(document));
                 LOGGER.info("Tempo da partida: " + obterTempoPartida(document));
+                LOGGER.info("Gols time da casa: " + obterGolsPartidaCasa(document));
+                LOGGER.info("Gols time visitante: " + obterGolsPartidaVisistante(document));
             }
             LOGGER.info("Nome da equipe da casa: " + obterNomeDaEquipeDaCasa(document));
             LOGGER.info("Nome da equipe visitante: " + obterNomeDaEquipeVisitante(document));
@@ -43,7 +48,7 @@ public class ScrappingUtil {
         return partida;
     }
 
-    public StatusPartida obterStatusDaPartida(Document document) {
+    private StatusPartida obterStatusDaPartida(Document document) {
         StatusPartida statusPartida = StatusPartida.PARTIDA_NAO_INICIADA;
         boolean isNotTempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").isEmpty();
         if (!isNotTempoPartida) {
@@ -60,7 +65,7 @@ public class ScrappingUtil {
         return statusPartida;
     }
 
-    public String obterTempoPartida(Document document) {
+    private String obterTempoPartida(Document document) {
         String tempoPartida = null;
         boolean isNotTempoPartida = document.select("div[class=imso_mh__lv-m-stts-cont]").isEmpty();
         if (!isNotTempoPartida) {
@@ -105,6 +110,24 @@ public class ScrappingUtil {
     private String obterLogoEquipeVisitante(Document document) {
         Element element = document.select("div[class=imso_mh__second-tn-ed imso_mh__tnal-cont imso-tnol]").first();
         return element.select("img[class=imso_btl__mh-logo]").attr("src");
+    }
+
+    private String obterGolsPartidaCasa(Document document){
+        List<String> golsEquipe = new ArrayList<>();
+        Elements elementos = document.select("div[class=imso_gs__tgs imso_gs__left-team]").select("div[class=imso_gs__gs-r]");
+        for(Element e : elementos){
+            golsEquipe.add(e.select("div[class=imso_gs__gs-r]").text());
+        }
+        return String.join(", ", golsEquipe);
+    }
+
+    private String obterGolsPartidaVisistante(Document document){
+        List<String> golsEquipe = new ArrayList<>();
+        Elements elementos = document.select("div[class=imso_gs__tgs imso_gs__right-team]").select("div[class=imso_gs__gs-r]");
+        for(Element e : elementos){
+            golsEquipe.add(e.select("div[class=imso_gs__gs-r]").text());
+        }
+        return String.join(", ", golsEquipe);
     }
 
 }
